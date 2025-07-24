@@ -1,0 +1,44 @@
+name: Deploy Strapi to ECR
+
+on:
+  push:
+    branches:
+      - main  # change if your main branch has a different name
+
+jobs:
+  deploy:
+    name: Build & Push Docker image to AWS ECR
+    runs-on: ubuntu-latest
+
+    env:
+      ECR_REPOSITORY: strapi  # must match your ECR repo name
+      AWS_REGION: ap-south-1  # change if using a different region
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build Docker image
+        run: |
+          docker build -t $ECR_REPOSITORY .
+
+      - name: Tag Docker image
+        run: |
+          ECR_URI="${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY"
+          docker tag $ECR_REPOSITORY:latest $ECR_URI:latest
+          echo "ECR_IMAGE=$ECR_URI:latest" >> $GITHUB_ENV
+
+      - name: Push Docker image to ECR
+        run: |
+          docker push ${{ env.ECR_IMAGE }}
