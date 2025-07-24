@@ -1,9 +1,9 @@
 resource "aws_ecs_cluster" "strapi_cluster" {
-  name = "strapi-cluster"
+  name = "strapiv-cluster"
 }
 
 resource "aws_ecs_task_definition" "strapi_task" {
-  family                   = "strapi-task"
+  family                   = "strapiv-task"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "512"
@@ -12,7 +12,7 @@ resource "aws_ecs_task_definition" "strapi_task" {
 
   container_definitions = jsonencode([
     {
-      name      = "strapi-container",
+      name      = "strapiv-container",
       image     = "${aws_ecr_repository.strapi_repo.repository_url}:latest",
       essential = true,
       portMappings = [
@@ -26,7 +26,7 @@ resource "aws_ecs_task_definition" "strapi_task" {
 }
 
 resource "aws_ecs_service" "strapi_service" {
-  name            = "strapi-service"
+  name            = "strapiv-service"
   cluster         = aws_ecs_cluster.strapi_cluster.id
   task_definition = aws_ecs_task_definition.strapi_task.arn
   launch_type     = "FARGATE"
@@ -43,7 +43,7 @@ resource "aws_ecs_service" "strapi_service" {
 
   load_balancer {
     target_group_arn = aws_lb_target_group.strapi_tg.arn
-    container_name   = "strapi-container"
+    container_name   = "strapiv-container"
     container_port   = var.container_port
   }
 
